@@ -1,0 +1,22 @@
+ok so here is the structure:
+
+= actions:
+- explore
+- sell
+- study
+- upgrade
+- expedition
+- recruit
+
+= rewards
+- score is based on level score and the players credits
+- doing nothing means dont get any rewards
+- goal it will work out is that the ai will try get as much score as possible before it dies (at 1000 hours)
+
+
+{current worries / issues}:
+
+the agent can basically just spam the explore function, so need to make a 'turn' system to prevent this..
+
+== so each action has a correspoding time: so sell takes 2 seconds, ect
+== then the agent can do whatever it wants to do within that time, then when its been 60 seconds then they can explore again. so the xplore checks the action time since last explore. They can do actions to increase this time or the agent can skip time
