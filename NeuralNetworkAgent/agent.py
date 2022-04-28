@@ -20,7 +20,7 @@ class Agent:
         self.epsilon = 0  # randomness
         self.gamma = 0.9  # discount rate (must be smaller than 1)
         self.memory = Deque(maxlen=MAX_MEMORY)  # popleft()
-        self.model = Linear_QNet(17, 256, 4) # state / hidden / output moves
+        self.model = Linear_QNet(25, 256, 8) # state / hidden / output moves
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
         # TODO: model, trainer
 
@@ -36,25 +36,62 @@ class Agent:
         '''
         state = [
             # get the ground checks
-            game.ground_check_1,
-            game.ground_check_2,
-            game.ground_check_3,
-            game.ground_check_4,
-            game.ground_check_5,
-            game.ground_check_6,
-            game.ground_check_7,
-            game.ground_check_8,
+            game.gr1,
+            game.gr2,
+            game.gr3,
+            game.gr4,
+            game.gr5,
+            game.gr6,
+            game.gr7,
+            game.gr8,
 
 
             # get the direction of the goal
-            game.goal_direction_1,
-            game.goal_direction_2,
-            game.goal_direction_3,
-            game.goal_direction_4,
-            game.goal_direction_5,
-            game.goal_direction_6,
-            game.goal_direction_7,
-            game.goal_direction_8,
+            game.gd1,
+            game.gd2,
+            game.gd3,
+            game.gd4,
+            game.gd5,
+            game.gd6,
+            game.gd7,
+            game.gd8,
+            game.gd9,
+            game.gd10,
+            game.gd11,
+            game.gd12,
+            game.gd13,
+            game.gd14,
+            game.gd15,
+            game.gd16,
+            #game.gd17,
+            #game.gd18,
+            #game.gd19,
+            #game.gd20,
+            #game.gd21,
+            #game.gd22,
+            #game.gd23,
+            #game.gd24,
+            #game.gd25,
+            #game.gd26,
+            #game.gd27,
+            #game.gd28,
+            #game.gd29,
+            #game.gd30,
+            #game.gd31,
+            #game.gd32,
+            #game.gd33,
+            #game.gd34,
+            #game.gd35,
+            #game.gd36,
+            #game.gd37,
+            #game.gd38,
+            #game.gd39,
+            #game.gd40,
+            #game.gd41,
+            #game.gd42,
+            #game.gd42,
+            #game.gd43,
+            #game.gd45,
 
             # get if user is closer to goal
             game.is_closer_to_goal
@@ -80,8 +117,8 @@ class Agent:
 
     def get_action(self, state):
         # random moves: tradoff exploration / exploitation
-        self.epsilon = 500 - self.number_of_games
-        final_move = [0,0,0,0]
+        self.epsilon = 2000 - self.number_of_games
+        final_move = [0,0,0,0,0,0,0,0]
         if random.randint(0,200) < self.epsilon:
             move = random.randint(0,3)
             final_move[move] = 1
@@ -125,7 +162,7 @@ def train():
         if done:
             # train the long memory (all experience / past life), plot the results live
             #game.reset(100*1.005**(agent.number_of_games + 1)) # also set the new number of hours to simulate
-            game.reset(150)
+            game.reset(40)
             agent.number_of_games += 1
             agent.train_long_memory()
 
