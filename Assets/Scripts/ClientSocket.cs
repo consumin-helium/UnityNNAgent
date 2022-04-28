@@ -42,7 +42,11 @@ public class ClientSocket : MonoBehaviour
 		Agent_input.Add("backward", 0);
 		Agent_input.Add("left", 0);
 		Agent_input.Add("right", 0);
-		Agent_input_old = Agent_input;
+        Agent_input.Add("forward_left", 0);
+        Agent_input.Add("forward_right", 0);
+        Agent_input.Add("backward_left", 0);
+        Agent_input.Add("backward_right", 0);
+        Agent_input_old = Agent_input;
         Agent_input_public = Agent_input;
 
         // add a placeholder
@@ -51,6 +55,10 @@ public class ClientSocket : MonoBehaviour
         TestSampleData.Add(2);
         TestSampleData.Add(3);
         TestSampleData.Add(4);
+        TestSampleData.Add(5);
+        TestSampleData.Add(6);
+        TestSampleData.Add(7);
+        TestSampleData.Add(8);
     }
     void Start()
 	{
@@ -151,13 +159,20 @@ public class ClientSocket : MonoBehaviour
 
                         //print(splitString[0]);
 
-                        // attempt to get persistent data using a list and not a dictionary 
-                        //var dank_placeholder = JsonUtility.FromJson<Dictionary<string, int>>(serverMessage);
-                        TestSampleData[0] = int.Parse(splitString[0]);
-                        TestSampleData[1] = int.Parse(splitString[1]);
-                        TestSampleData[2] = int.Parse(splitString[2]);
-                        TestSampleData[3] = int.Parse(splitString[3]);
-                        TestSampleData[4] = int.Parse(splitString[4]);
+                        // UPDATE DIRECTION OF MOVEMENT FOR AGENT
+                        
+                        TestSampleData[0] = int.Parse(splitString[0]); // forward
+                        TestSampleData[1] = int.Parse(splitString[1]); // backward
+                        TestSampleData[2] = int.Parse(splitString[2]); // left
+                        TestSampleData[3] = int.Parse(splitString[3]); // right
+
+                        
+                        TestSampleData[4] = int.Parse(splitString[4]); // forward left
+                        TestSampleData[5] = int.Parse(splitString[5]); // forward right
+                        TestSampleData[6] = int.Parse(splitString[6]); // backward left
+                        TestSampleData[7] = int.Parse(splitString[7]); // backward right
+
+                        TestSampleData[8] = int.Parse(splitString[8]); // reset game
 
                         // here we then move the player based on the results
                         //Player.GetComponent<AgentSensory>().move();
