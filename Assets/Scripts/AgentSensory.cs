@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.UI;
 public class AgentSensory : MonoBehaviour
 {
 
@@ -18,7 +18,12 @@ public class AgentSensory : MonoBehaviour
 
     public GameObject evntmanager;
 
-    
+    public Text goalDistance;
+    public Text MaxgoalDistance;
+    public Text goalDirection;
+    public Text GoalRewardText;
+
+    public bool GoalTraining = false;
 
     public Vector3 new_place3D;
 
@@ -38,13 +43,16 @@ public class AgentSensory : MonoBehaviour
     public int CircleDistance = 10;
     public int NumberOfPointsToCheck = 16;
 
+    public float InitGoalDist = 21f;
 
     void Start()
     {
         ClosestToGoal = 300;
         CircleDistance = 1;
         NumberOfPointsToCheck = 16;
-        
+
+        InputData["init_goal"] = 21;
+
         for (int a = 0; a < NumberOfPointsToCheck; a++)
         {
             PossibleDirections.Add(0);
@@ -80,6 +88,16 @@ public class AgentSensory : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
+        
+
+        // HERE WE UPDATE THE DEBUGGING TEXT ELEMENTS
+        var dist_temp = Vector3.Distance(transform.position, new Vector3(Goal.transform.position.x, Goal.transform.position.y, Goal.transform.position.z));
+        
+        goalDistance.text = "Goal Dist = " + dist_temp;
+        MaxgoalDistance.text = "Goal Dist = " + ClosestToGoal;
+        GoalRewardText.text = "Reward = " + ((InitGoalDist - dist_temp)*10);
+
         // here we get the circle points
         for (int p = 0; p < NumberOfPointsToCheck; p++)
         {
@@ -104,12 +122,18 @@ public class AgentSensory : MonoBehaviour
 
         var reference_movement_instructions = evntmanager.GetComponent<ClientSocket>().TestSampleData;
 
+        // Here we check if the player is dying, and we reset its pos and randomize the goals position
         if (actualREset)
         {
+            
+            
             //print("RESETTING PLAYER");
             this.transform.position = new Vector3(0, 1, 0);
             reference_movement_instructions[4] = 0;
-            ClosestToGoal = 30f;
+
+            // reset the call to reset the player due to falling off map
+            InputData["reset_agent"] = 0;
+
             actualREset = false;
         }
 
@@ -117,7 +141,20 @@ public class AgentSensory : MonoBehaviour
         if(reference_movement_instructions[8] == 1)
         {
             actualREset = true;
-            
+            InputData["reset_agent"] = 0;
+
+            // here we update and move the goal to a new position
+            var new_goal_pos = new Vector3(Random.Range(-15.0f, 15.0f), 1, Random.Range(-15.0f, 15.0f));
+            if (GoalTraining) {
+                Goal.transform.position = new_goal_pos; // USE THIS IF TRAINING AGENT WHAT A GOAL IS, SO IT MOVES GOAL SPAWN EVERY LIFE
+            }
+
+            float actual_DISTANCE = Vector3.Distance(transform.position, new Vector3(Goal.transform.position.x - transform.position.x, Goal.transform.position.y - transform.position.y, Goal.transform.position.z - transform.position.z));
+            ClosestToGoal = actual_DISTANCE; //30f
+            // pass this distance from goal to the NN
+            InputData["init_goal"] = (int)actual_DISTANCE;
+            InitGoalDist = actual_DISTANCE;
+
         }
 
         // HERE ARE MOVEMENT INDEXES 
@@ -255,6 +292,7 @@ public class AgentSensory : MonoBehaviour
         }
 
         // check if ground beneith otherwise kill agent
+        // bug where it hardlocks being reset, so we need to reset the reset value lol
         if (!Physics.Raycast(new Vector3(transform.position.x, 3f, transform.position.z), Vector3.down, out hit, 10f))
         {
             // here the agent has died, reset it
@@ -262,6 +300,24 @@ public class AgentSensory : MonoBehaviour
             this.transform.position = new Vector3(0, 1, 0);
             reference_movement_instructions[4] = 0;
             ClosestToGoal = 30f;
+
+            // here we update and move the goal to a new position
+            var new_goal_pos = new Vector3(Random.Range(-15.0f, 15.0f), 1, Random.Range(-15.0f, 15.0f));
+            if (GoalTraining)
+            {
+                Goal.transform.position = new_goal_pos; // ONLY USE THIS WHEN TRAINING AGENT TO MOVE TOWARDS GOALS
+            }
+                
+                float actual_DISTANCE = Vector3.Distance(transform.position, new Vector3(Goal.transform.position.x - transform.position.x, Goal.transform.position.y - transform.position.y, Goal.transform.position.z - transform.position.z));
+            ClosestToGoal = actual_DISTANCE; //30f
+            // pass this distance from goal to the NN
+            InputData["init_goal"] = (int)actual_DISTANCE;
+            InitGoalDist = actual_DISTANCE;
+        }
+        else
+        {
+            // here there is ground below player, so we dont reset it
+            InputData["reset_agent"] = 0;
         }
 
 

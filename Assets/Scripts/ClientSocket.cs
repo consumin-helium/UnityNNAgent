@@ -150,7 +150,13 @@ public class ClientSocket : MonoBehaviour
                         if (!IsSwitch)
                         {
                             IsSwitch = true;
+
+
+                            // here we then move the player based on the results
+                            //Player.GetComponent<AgentSensory>().move();
                         }
+                        //print("Here is input data : " + serverMessage);
+                        //print("here is switch state :" + IsSwitch);
 
                         serverMessage = serverMessage.Replace("[", "");
                         serverMessage = serverMessage.Replace("]", "");
@@ -160,23 +166,19 @@ public class ClientSocket : MonoBehaviour
                         //print(splitString[0]);
 
                         // UPDATE DIRECTION OF MOVEMENT FOR AGENT
-                        
+
                         TestSampleData[0] = int.Parse(splitString[0]); // forward
                         TestSampleData[1] = int.Parse(splitString[1]); // backward
                         TestSampleData[2] = int.Parse(splitString[2]); // left
                         TestSampleData[3] = int.Parse(splitString[3]); // right
 
-                        
+
                         TestSampleData[4] = int.Parse(splitString[4]); // forward left
                         TestSampleData[5] = int.Parse(splitString[5]); // forward right
                         TestSampleData[6] = int.Parse(splitString[6]); // backward left
                         TestSampleData[7] = int.Parse(splitString[7]); // backward right
 
                         TestSampleData[8] = int.Parse(splitString[8]); // reset game
-
-                        // here we then move the player based on the results
-                        //Player.GetComponent<AgentSensory>().move();
-
 
                         //Debug.Log("server message received as: " + Agent_input);
                         // attempt to update object in unity with data
@@ -185,7 +187,7 @@ public class ClientSocket : MonoBehaviour
 				}
 			}
 		}
-		catch (SocketException socketException)
+		catch (Exception socketException)
 		{
 			Debug.Log("Socket exception: " + socketException);
 		}
