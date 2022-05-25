@@ -136,6 +136,8 @@ class RedBoiAI():
         self.reset_game = 0
         self.is_closer_to_goal = 0
         self.distanse = 1000
+        self.initial_distance_from_goal = 21
+        self.last_data = {}
 
         # imported from the last model
         self._hours_spent = 0
@@ -144,6 +146,8 @@ class RedBoiAI():
         self.reward = 0
         self.tick = 0
         self._simulation_duration = 40
+
+        self.temp_clamped_distance = 21
 
     def reset(self, new_sim_duration):  # creates new player for new iteration
         # tracked game tick, idk why we use this but i guess its for like "how many moves it made" or whatever
@@ -229,6 +233,8 @@ class RedBoiAI():
         self.reset_game = 0
         self.is_closer_to_goal = 0
         self.distanse = 1000
+        
+        self.initial_distance_from_goal = abs(int(self.last_data['init_goal']))
 
         # imported from the last model
         self._hours_spent = 0
@@ -306,8 +312,22 @@ class RedBoiAI():
         self.tick += 1
 
         self._hours_spent +=1
+
+        # Here we reset the moves list
+        Agent_Input_List[0] = 0
+        Agent_Input_List[1] = 0
+        Agent_Input_List[2] = 0
+        Agent_Input_List[3] = 0
+        Agent_Input_List[4] = 0
+        Agent_Input_List[5] = 0
+        Agent_Input_List[6] = 0
+        Agent_Input_List[7] = 0
         # make a play
         self.move(action)
+
+
+        # wait 1 second
+        #time.sleep(0.5)
 
         '''
         HERE we send the command to unity to make a move
@@ -318,8 +338,12 @@ class RedBoiAI():
         # convert the movement action to a dict
         data_package = str(Agent_Input_List)
 
-        # send a thank you message to the client. encoding to send byte type.
+        # debug send the instructions list
+        #print("Instructions sent :",data_package)
+
+        # Decide on a move and then send the instructions to the agent in unity
         c.send(data_package.encode())
+        #time.sleep(0.5)
 
         # print what we receive from unity
         damn = c.recv(1024).decode()
@@ -332,10 +356,13 @@ class RedBoiAI():
         damn = damn.replace("}",'"}')
         #print(damn)
         damn = json.loads(damn)
+
+        self.last_data = damn
         #print(damn)
         #print(damn["gd0"])
 
         # here we go through the laborious process of setting akk the results to their self values
+        # goal direction checks
         self.gd1 = int(damn["gd0"])
         self.gd2 = int(damn["gd1"])
         self.gd3 = int(damn["gd2"])
@@ -384,7 +411,7 @@ class RedBoiAI():
 
         
 
-
+        # ground checks
         self.gr1 = int(damn['gr0'])
         self.gr2 = int(damn['gr1'])
         self.gr3 = int(damn['gr2'])
@@ -393,31 +420,40 @@ class RedBoiAI():
         self.gr6 = int(damn['gr5'])
         self.gr7 = int(damn['gr6'])
         self.gr8 = int(damn['gr7'])
+
+        # get the spawn distance from goal
+        #self.initial_distance_from_goal = int(damn['init_goal'])
         
         self.reset_game = int(damn["reset_agent"])
-
+ 
         self.distanse = int(damn["AgentDistance"])
         if self.distanse == 0:
             self.distanse = 1
         # we also check if the agent is moving towards the goal, and if so then we reward it
-        if int(damn['agent_closer']) == 1:
-            self.is_closer_to_goal = 1
-            self.reward = 10
-            # the agents reward is an inverse function of its distance towards the goal
+        #if int(damn['agent_closer']) == 1:
+        #    self.is_closer_to_goal = 1
+        #    self.reward = 10
+        #    # the agents reward is an inverse function of its distance towards the goal
         
         #self.reward += 10000* (1/self.distanse)
         ## NEW METHOD TO GIVE ACTURATE AND FLAT REWARDS
-        self.reward += 21 - self.distanse
+        self.reward += (self.initial_distance_from_goal - self.distanse)*10
 
         
+        if self.distanse > self.initial_distance_from_goal:
+            self.temp_clamped_distance = self.initial_distance_from_goal
+        else:
+            self.temp_clamped_distance = self.distanse
         
-        print("SCORE",self.distanse)
-        self._score = ((21 - self.distanse)/21)*100
+        # whats going on here? ohhh its capping the score at 0 if the agent moves further than init position 
+        # TODO NAHH G, there is some black magic here bruh got me deaaad
+        self._score = ((self.initial_distance_from_goal - self.temp_clamped_distance)/self.initial_distance_from_goal)*100
         
-        
-        
+        # TEST to update the initial distance from the goal to forcably promote moving towards the goal please TODO CHECK THIS AND MAYBE REMOVE IF ISSUES ARRISE
+        #self.initial_distance_from_goal = self.distanse
 
-        
+        # Test why the agent keeps saying 1 move onyl when it dies for first time
+        print("reset status from edge :",self.reset_game)
 
         # check if game is over (ie if it has exceeded the allocated time to simulate)
         game_over = False
@@ -438,9 +474,11 @@ class RedBoiAI():
             Agent_Input_List[8] = 1
 
         if self.reset_game:
-            self.reward = -100
+            self.reward = -1000
+            self.distanse = 1000
             # here the player has fallen off the map, and should die
             game_over = True
+            self.reset_game = 0
 
         return self.reward, game_over, self._score
 

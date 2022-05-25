@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import os
+import shutil
 
 class Linear_QNet(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
@@ -22,13 +23,23 @@ class Linear_QNet(nn.Module):
 
         file_name = os.path.join(model_folder_path, file_name)
         torch.save(self.state_dict(), file_name)
+        # here we can save the model to another format
+        #model_scripted = torch.jit.script(self) # Export to TorchScript
+        #model_scripted.save('./model/model_scripted.pt') # Save
 
-    # custom code here lol
-    def load(self,file_name='model.pth'):
-        model_folder_path = './model'
-        # Model class must be defined somewhere
-        model = torch.load(model_folder_path)
-        model.eval()
+    def save_ckp(self, state, is_best, checkpoint_dir, best_model_dir):
+        f_path = './checkpoint/checkpoint.pt'
+        torch.save(state, f_path)
+        if is_best:
+            best_fpath = './model/best_model.pt'
+            shutil.copyfile(f_path, best_fpath)
+
+    def load_ckp(checkpoint_fpath, model, optimizer):
+        checkpoint = torch.load('./checkpoint/checkpoint.pt')
+        model.load_state_dict(checkpoint['state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
+        return model, optimizer, checkpoint['epoch']
+
 
 class QTrainer:
     def __init__(self, model, lr, gamma):
@@ -37,6 +48,14 @@ class QTrainer:
         self.model = model.cuda() 
         self.optimizer = optim.Adam(model.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss()
+
+        # here we (TRY) get it to resume from a previous model
+        # only do this if the file exists
+        if os.path.exists("./checkpoint/checkpoint.pt"):
+            model = model.cuda()
+            optimizer = optim.Adam(model.parameters(), lr=self.lr)
+            ckp_path = "./checkpoint/checkpoint.pt"
+            self.model, self.optimizer, start_epoch = Linear_QNet.load_ckp(ckp_path, model, optimizer)
 
     def train_step(self, state, action, reward, next_state, done):
         state = torch.tensor(state, dtype=torch.float).cuda() 
